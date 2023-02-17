@@ -1,67 +1,60 @@
+import time
 import requests
 from bs4 import BeautifulSoup
 from config import config
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
-driver = webdriver.Chrome()
-driver.get("https://www.selenium.dev/selenium/web/web-form.html")
-title = driver.title
-assert title == "Web form"
+wi_urls = [config['wi_india_url'],
+             config['wi_world_url'],
+             config['wi_science_url']]
 
-driver.implicitly_wait(0.5)
+chrome_options = Options()
+chrome_options.add_argument('--ignore-certificate-errors')
+chrome_options.add_argument('--ignore-ssl-errors')
+chrome_options.add_argument('--disable-web-security')
+chrome_options.add_argument('--allow-running-insecure-content')
+chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-text_box = driver.find_element(by=By.NAME, value="my-text")
-submit_button = driver.find_element(by=By.CSS_SELECTOR, value="button")
+def scroll_height(driver, scroll_times=1 ):
+    for i in range(scroll_times):
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") #scroll to end of the browser window
+        time.sleep(5) # sleep for 5 seconds to allow page content to load
+                
+def get_wi_news(url, pages_to_load=3):
+    global time    
+    wi_browser = webdriver.Chrome(service= Service( config['MY_PATH_TO_CHROME'] ), options = chrome_options)
+    wi_browser.get(url)
+    time.sleep(10) # sleep for first time to load page properly
+    scroll_height(scroll_times= pages_to_load, driver= wi_browser)
+    wi_response = wi_browser.page_source
+    wi_soup = BeautifulSoup(wi_response, 'lxml')
+    wi_news = []
 
-text_box.send_keys("Selenium")
-submit_button.click()
+    wi_headline = wi_soup.find("div", class_="thumb-txt")
+    wi_headline_title = wi_headline.find("h2").text
+    
+    wi_headline_sharer = wi_soup.find("div", class_="social-icon")
+    headline_sharer_link = wi_headline_sharer.find("a").get("href")
+    wi_headline_link = headline_sharer_link.split("u=", 1)
+    
+    wi_news.append([wi_headline_title, wi_headline_link[1]])
 
-message = driver.find_element(by=By.ID, value="message")
-value = message.text
-assert value == "Received!"
+    for item in wi_soup.find_all("div", class_="article-list-txt"):
+        title = item.find("h2").text
+        time = item.find("div", class_="date-author-loc").text
+        link = item.find("a", class_="list-more").get("href")
+        
+        wi_news.append([title , time, config['wi_main_url']+link])
 
-driver.quit()
-
-# wion_main_response = requests.get(config['wion_main_url'], headers = config['headers'])
-# wion_india_response = requests.get(config['wion_india_url'], headers = config['headers'])
-# wion_world_response = requests.get(config['wion_world_url'], headers = config['headers'])
-# wion_science_response = requests.get(config['wion_science_url'], headers = config['headers'])
-
-# wion_main_soup = BeautifulSoup(wion_main_response.text, 'lxml')
-# wion_india_soup = BeautifulSoup(wion_india_response.text, 'lxml')
-# wion_world_soup = BeautifulSoup(wion_world_response.text, 'lxml')
-# wion_science_soup = BeautifulSoup(wion_science_response.text, 'lxml')
-
-# wion_india_news, wion_world_news, wion_science_news = []
-
-# wion_india_headline = wion_india_soup.find("div", class_="thumb-txt")
-# wion_india_headline_title = wion_india_headline.find("h2").text
-# wion_world_headline = wion_world_soup.find("div", class_="thumb-txt")
-# wion_world_headline_title = wion_world_headline.find("h2").text
-# wion_science_headline = wion_science_soup.find("div", class_="thumb-txt")
-# wion_science_headline_title = wion_science_headline.find("h2").text
-
-# wion_india_news.append(wion_india_headline_title)
-# wion_world_news.append(wion_world_headline_title)
-# wion_science_news.append(wion_world_headline_title)
-
-# for item in wion_world_soup.find_all("div", class_="article-list-txt"):
-#     title = item.find("h2").text
-#     time = item.find("div", class_="date-author-loc").text
-#     wion_world_news.append([title , time])
-
-# for item in wion_india_soup.find_all("div", class_="article-list-txt"):
-#     title = item.find("h2").text
-#     time = item.find("div", class_="date-author-loc").text
-#     wion_india_news.append([title , time])
-
-# for item in wion_science_soup.find_all("div", class_="article-list-txt"):
-#     title = item.find("h2").text
-#     time = item.find("div", class_="date-author-loc").text
-#     wion_science_news.append([title , time])
+    wi_browser.quit()
 
 
+
+
+get_wi_news(config['wi_india_url'])
 
 
 
