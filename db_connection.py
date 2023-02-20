@@ -31,12 +31,14 @@ class my_database:
         (headline_title, headline_date, headline_time, headline_link) 
         VALUES (%s,%s,%s,%s)"""
         cursor.execute(db_command, headline_data)
+        self.db_conn.commit()
     
     def get_db_headline(self, ):
         cursor = self.db_conn.cursor()
         db_command = "SELECT headline_title FROM news_india_headline"        
         cursor.execute(db_command)
-        result = cursor.fetchone()    
+        result = cursor.fetchone()
+        return result  
    
     def clean_headline_db(self, ):
         cursor = self.db_conn.cursor()
