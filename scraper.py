@@ -27,8 +27,10 @@ def scroll_height(driver, scroll_times=1 ):
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") #scroll to end of the browser window
         time.sleep(5) # sleep for 5 seconds to allow page content to load
 
-def get_wi_news(url, pages_to_load=3):
-    global time    
+def get_wi_news(dbkey, url, pages_to_load=3):
+    global time
+    last_saved_title = my_db_conn.get_last_db_headline(dbkey)
+    
     wi_browser = webdriver.Chrome(service= Service( config['MY_PATH_TO_CHROME'] ), options = chrome_options)
     wi_browser.get(url)
     time.sleep(10) # sleep for first time to load page properly
@@ -54,14 +56,15 @@ def get_wi_news(url, pages_to_load=3):
         link = item.find("a", class_="list-more").get("href")
         date_time = str_time.split()
         
-        if title == my_db_conn.get_last_db_headline():
-            break
+        if len(last_saved_title) > 0 :                
+            if title == last_saved_title[0][0]:
+                break
         wi_news.append((title , date_time[0], date_time[1], config['wi_main_url']+link))
 
     wi_browser.quit()
     # reverse collected data list for easy access and usability later.
     wi_news.reverse()     
-    my_db_conn.save_to_india_db(wi_news) #save collected data to database
+    my_db_conn.save_news_to_db(dbkey, wi_news) #save collected data to database
 
 
 

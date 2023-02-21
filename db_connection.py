@@ -18,19 +18,19 @@ class my_database:
             else:
                 print(err)
                 
-    def save_to_india_db(self, collected_news):
+    def save_news_to_db(self, dbkey, collected_news):
         cursor = self.db_conn.cursor()
-        db_command = """INSERT INTO news_india (news_title, news_date, news_time, news_link )
-        VALUES (%s,%s, %s, %s)"""
+        db_command = """INSERT INTO {} (news_title, news_date, news_time, news_link )
+        VALUES (%s,%s, %s, %s)""".format(dbkey)
         cursor.executemany(db_command, collected_news)
         self.db_conn.commit()
         
-    def get_last_db_headline(self):
+    def get_last_db_headline(self, dbkey):
         cursor = self.db_conn.cursor()
-        db_command = "SELECT news_title FROM news_india ORDER BY news_number DESC LIMIT 1"
+        db_command = "SELECT news_title FROM {} ORDER BY news_number DESC LIMIT 1".format(dbkey)
         cursor.execute(db_command)
         result = cursor.fetchall()  
-        return result[0][0]
+        return result
         
     def close_db_conn(self):
         self.db_conn.close()
