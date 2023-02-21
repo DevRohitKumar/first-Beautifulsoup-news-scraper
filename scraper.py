@@ -20,7 +20,6 @@ chrome_options.add_argument('--disable-web-security')
 chrome_options.add_argument('--allow-running-insecure-content')
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-
 my_db_conn = my_database(config['DB'])
 
 def scroll_height(driver, scroll_times=1 ):
@@ -41,34 +40,31 @@ def get_wi_news(url, pages_to_load=3):
     wi_headline = wi_soup.find("div", class_="thumb-txt")
     wi_headline_title = wi_headline.find("h2").text
     
+    #extract headline link from the first sharer link
     wi_headline_sharer = wi_soup.find("div", class_="social-icon")
     headline_sharer_link = wi_headline_sharer.find("a").get("href")
     wi_headline_link = headline_sharer_link.split("u=", 1)
     date_time = str( datetime.now().replace(microsecond=0)).split()
     
-    headline_data = ((wi_headline_title, date_time[0], date_time[1] , wi_headline_link[1]))
-    my_db_conn.save_headline_to_db(headline_data)
-    wi_news.append(headline_data)
-
+    wi_news.append((wi_headline_title, date_time[0], date_time[1] , wi_headline_link[1]))
+    
     for item in wi_soup.find_all("div", class_="article-list-txt"):
         title = item.find("h2").text
         str_time = item.find("div", class_="date-author-loc").text
         link = item.find("a", class_="list-more").get("href")
-        date_time = str_time.split() 
+        date_time = str_time.split()
+        
+        if title == my_db_conn.get_last_db_headline():
+            break
         wi_news.append((title , date_time[0], date_time[1], config['wi_main_url']+link))
 
     wi_browser.quit()
-    return wi_news
+    # reverse collected data list for easy access and usability later.
+    wi_news.reverse()     
+    my_db_conn.save_to_india_db(wi_news) #save collected data to database
 
-def get_headline():
-    my_db_conn.get_db_headline()
 
-collected_news = get_wi_news(config['wi_india_url'])
-my_db_conn.save_to_india_db(collected_news)
-# save_to_db(collected_news)
-# get_last_news_headline()
 
-get_headline()
 
 '''
 Author 👨‍🔬: Rohit Kumar

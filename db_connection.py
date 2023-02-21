@@ -25,26 +25,12 @@ class my_database:
         cursor.executemany(db_command, collected_news)
         self.db_conn.commit()
         
-    def save_headline_to_db(self, headline_data):
+    def get_last_db_headline(self):
         cursor = self.db_conn.cursor()
-        db_command = """INSERT INTO news_india_headline 
-        (headline_title, headline_date, headline_time, headline_link) 
-        VALUES (%s,%s,%s,%s)"""
-        cursor.execute(db_command, headline_data)
-        self.db_conn.commit()
-    
-    def get_db_headline(self, ):
-        cursor = self.db_conn.cursor()
-        db_command = "SELECT headline_title FROM news_india_headline"        
+        db_command = "SELECT news_title FROM news_india ORDER BY news_number DESC LIMIT 1"
         cursor.execute(db_command)
-        result = cursor.fetchone()
-        return result  
-   
-    def clean_headline_db(self, ):
-        cursor = self.db_conn.cursor()
-        db_command = "DELETE FROM news_india_headline"     
-        cursor.execute(db_command, collected_news)
-        self.db_conn.commit()
+        result = cursor.fetchall()  
+        return result[0][0]
         
     def close_db_conn(self):
         self.db_conn.close()
